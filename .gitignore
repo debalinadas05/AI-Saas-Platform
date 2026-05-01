@@ -1,0 +1,21 @@
+# frontend
+client/node_modules
+client/dist
+
+# backend
+server/node_modules
+
+# env files
+.env
+client/.env
+server/.env
+
+# misc
+.DS_Store
+
+# logs
+*.log
+
+# build files
+client/build
+server/build

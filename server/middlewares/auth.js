@@ -1,40 +1,31 @@
-import { clerkClient } from "@clerk/express";
+import jwt from "jsonwebtoken";
+import sql from "../config/db.js";
 
 export const auth = async (req, res, next) => {
   try {
-    const { userId, has } = req.auth(); // ✅ FIX (no await)
+    const authHeader = req.headers.authorization;
 
-    if (!userId) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
 
-    let hasPremiumPlan = false;
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    try {
-      hasPremiumPlan = await has({ plan: "premium" });
-    } catch {
-      hasPremiumPlan = false;
+    const [user] = await sql`
+      SELECT id, name, email, plan, free_usage FROM users WHERE id = ${decoded.userId}
+    `;
+
+    if (!user) {
+      return res.status(401).json({ success: false, message: "User not found" });
     }
 
-    const user = await clerkClient.users.getUser(userId);
-
-    const currentUsage = user.privateMetadata?.free_usage || 0;
-
-    if (!hasPremiumPlan) {
-      req.free_usage = currentUsage;
-    } else {
-      await clerkClient.users.updateUserMetadata(userId, {
-        privateMetadata: {
-          free_usage: 0,
-        },
-      });
-      req.free_usage = 0;
-    }
-
-    req.plan = hasPremiumPlan ? "premium" : "free";
+    req.userId = user.id;
+    req.plan = user.plan || "free";
+    req.free_usage = user.free_usage || 0;
 
     next();
-  } catch (error) {
-    res.status(401).json({ success: false, message: error.message });
+  } catch (err) {
+    return res.status(401).json({ success: false, message: "Invalid token" });
   }
 };

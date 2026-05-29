@@ -1,5 +1,7 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
+import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/Home";
 import Layout from "./pages/Layout";
@@ -11,36 +13,36 @@ import RemoveBackground from "./pages/RemoveBackground";
 import RemoveObject from "./pages/RemoveObject";
 import ReviewResume from "./pages/ReviewResume";
 import Community from "./pages/Community";
-import { useAuth } from '@clerk/clerk-react'
-import { useEffect } from "react";
-import { Toaster } from "react-hot-toast";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
+// Protect routes — redirect to /login if not logged in
+const PrivateRoute = ({ children }) => {
+  const { token, loading } = useAuth();
+  if (loading) return null;
+  return token ? children : <Navigate to="/login" />;
+};
 
 const App = () => {
-
-  const {getToken} = useAuth()
-  useEffect(() => {
-    getToken().then((token) => console.log(token));
-  }, [])
-
   return (
     <div>
       <Toaster />
-    <Routes>
-      <Route path="/" element={<Home />} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      <Route path="/ai" element={<Layout />}>
-        <Route index element={<Dashboard />} />
-
-        <Route path="write-article" element={<WriteArticle />} />
-
-        <Route path="blog-titles" element={<BlogTitles />} />
-        <Route path="generate-images" element={<GenerateImages />} />
-        <Route path="remove-background" element={<RemoveBackground />} />
-        <Route path="remove-object" element={<RemoveObject />} />
-        <Route path="review-resume" element={<ReviewResume />} />
-        <Route path="community" element={<Community />} />
-      </Route>
-    </Routes>
+        <Route path="/ai" element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route index element={<Dashboard />} />
+          <Route path="write-article" element={<WriteArticle />} />
+          <Route path="blog-titles" element={<BlogTitles />} />
+          <Route path="generate-images" element={<GenerateImages />} />
+          <Route path="remove-background" element={<RemoveBackground />} />
+          <Route path="remove-object" element={<RemoveObject />} />
+          <Route path="review-resume" element={<ReviewResume />} />
+          <Route path="community" element={<Community />} />
+        </Route>
+      </Routes>
     </div>
   );
 };

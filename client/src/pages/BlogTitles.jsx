@@ -1,5 +1,8 @@
 import { Hash, Sparkles } from "lucide-react";
 import React, { useState } from "react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+import toast, { Toaster } from "react-hot-toast";
 
 const BlogTitles = () => {
   const blogCategories = [
@@ -15,8 +18,37 @@ const BlogTitles = () => {
 
   const [selectedCategory, setSelectedCategory] = useState("General");
   const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [titles, setTitles] = useState([]);
+
+  const { getToken } = useAuth();
+
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+    try {
+      setLoading(true);
+      const token = await getToken();
+
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BASE_URL}/api/ai/generate-blog-title`,
+        { prompt: `${input} (Category: ${selectedCategory})` },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        // Split numbered list into individual titles
+        const lines = data.content
+          .split("\n")
+          .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+          .filter((line) => line.length > 0);
+        setTitles(lines);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+    setLoading(false);
   };
 
   return (
@@ -24,6 +56,7 @@ const BlogTitles = () => {
       className="h-full overflow-y-scroll p-6 flex items-start flex-wrap gap-4
     text-slate-700"
     >
+      <Toaster />
       <form
         onSubmit={onSubmitHandler}
         className="w-full max-w-lg p-4 bg-white rounded-lg border
@@ -31,7 +64,7 @@ const BlogTitles = () => {
       >
         <div className="flex items-center gap-3">
           <Sparkles className="w-6 text-[#8E37EB]" />
-          <h1 className="text-xl font-semibold">AI Title Generaltor</h1>
+          <h1 className="text-xl font-semibold">AI Title Generator</h1>
         </div>
         <p className="mt-6 text-sm font-medium">Keyword</p>
 
@@ -41,8 +74,7 @@ const BlogTitles = () => {
           type="text"
           className="w-full p-2 px-3 mt-2 outline-none text-sm
         rounded-md border border-gray-300"
-          placeholder="The future pf artificial
-        intelligence is..."
+          placeholder="The future of artificial intelligence is..."
           required
         />
 
@@ -66,11 +98,16 @@ const BlogTitles = () => {
         </div>
         <br />
         <button
+          disabled={loading}
           className="w-full flex justify-center items-center gap-2
         bg-gradient-to-r from-[#C341F6] to-[#8E37EB] text-white px-4 py-2 mt-6
         text-sm rounded-lg cursor-pointer"
         >
-          <Hash className="w-5" />
+          {loading ? (
+            <span className="w-4 h-4 my-1 rounded-full border-2 border-t-transparent animate-spin"></span>
+          ) : (
+            <Hash className="w-5" />
+          )}
           Generate title
         </button>
       </form>
@@ -84,12 +121,26 @@ const BlogTitles = () => {
           <h1 className="text-xl font-semibold">Generated titles</h1>
         </div>
 
-        <div className="flex-1 flex justify-center items-center">
-          <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
-            <Hash className="w-9 h-9" />
-            <p>Enter a topic and click "Generate title" to get started</p>
+        {titles.length === 0 ? (
+          <div className="flex-1 flex justify-center items-center">
+            <div className="text-sm flex flex-col items-center gap-5 text-gray-400">
+              <Hash className="w-9 h-9" />
+              <p>Enter a topic and click "Generate title" to get started</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <ul className="mt-4 flex flex-col gap-3">
+            {titles.map((title, index) => (
+              <li
+                key={index}
+                className="flex items-start gap-3 p-3 rounded-lg bg-purple-50 border border-purple-100 text-sm text-slate-700"
+              >
+                <span className="text-purple-500 font-semibold">{index + 1}.</span>
+                {title}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

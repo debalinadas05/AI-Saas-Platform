@@ -1,24 +1,21 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import { clerkMiddleware } from '@clerk/express';
 import aiRouter from './routes/aiRoutes.js';
 import connectCloudinary from './config/cloudinary.js';
 import userRouter from './routes/userRoutes.js';
+import authRouter from './routes/authRoutes.js';
 
 const app = express();
 
 await connectCloudinary();
 
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
 app.use(express.json());
-app.use(clerkMiddleware());
 
 app.get('/', (req, res) => res.send('Server is Live!'));
 
-// ❌ REMOVE THIS LINE
-// app.use(requireAuth())
-
+app.use('/api/auth', authRouter);
 app.use('/api/ai', aiRouter);
 app.use('/api/user', userRouter);
 

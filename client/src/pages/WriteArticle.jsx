@@ -1,8 +1,9 @@
 import { Edit, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import axios from "axios";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import Markdown from "react-markdown";
 
 const WriteArticle = () => {
   const articleLength = [
@@ -26,15 +27,12 @@ const WriteArticle = () => {
 
       const { data } = await axios({
         method: "post",
-        url: "http://localhost:3000/api/ai/generate-article",
+        url: `${import.meta.env.VITE_BASE_URL}/api/ai/generate-article`,
         data: {
           prompt,
           length: selectedLength.length,
         },
       });
-
-      console.log("RESPONSE:", data);
-      console.log("FULL:", JSON.stringify(data, null, 2));
 
       if (data.success) {
         setContent(data.content);
@@ -42,7 +40,6 @@ const WriteArticle = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      console.log("ERROR:", error.response || error);
       toast.error(error.message);
     }
     setLoading(false);
@@ -129,10 +126,9 @@ const WriteArticle = () => {
           </div>
         ) : (
           <div className="mt-3 h-full overflow-y-scroll text-sm text-slate-600">
-            <div className=".reset-tw">
+            <div className="reset-tw">
               <Markdown>{content}</Markdown>
             </div>
-            
           </div>
         )}
       </div>

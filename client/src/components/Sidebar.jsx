@@ -1,17 +1,10 @@
 import React from 'react'
-import { Protect, useClerk, useUser } from '@clerk/clerk-react'
+import { useAuth } from '../context/AuthContext'
 import {
-  Eraser,
-  FileText,
-  Hash,
-  House,
-  Image,
-  LogOut,
-  Scissors,
-  SquarePen,
-  Users
+  Eraser, FileText, Hash, House, Image,
+  LogOut, Scissors, SquarePen, Users, Gem
 } from 'lucide-react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 const navItems = [
   { to: '/ai', label: 'Dashboard', Icon: House },
@@ -25,9 +18,18 @@ const navItems = [
 ]
 
 const Sidebar = ({ sidebar, setSidebar }) => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
-  const { user } = useUser()
-  const { signOut, openUserProfile } = useClerk()
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  // Get initials for avatar placeholder
+  const initials = user?.name
+    ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'U'
 
   return (
     <div
@@ -36,19 +38,17 @@ const Sidebar = ({ sidebar, setSidebar }) => {
       bottom-0 ${sidebar ? 'translate-x-0' : 'max-sm:-translate-x-full'}
       transition-all duration-300 ease-in-out`}
     >
-
       {/* TOP */}
       <div className='my-7 w-full'>
-        <img
-          src={user?.imageUrl}
-          alt="User avatar"
-          className='w-14 h-14 rounded-full mx-auto'
-        />
+        {/* Avatar */}
+        <div className='w-14 h-14 rounded-full mx-auto bg-gradient-to-br from-[#3C81F6] to-[#9234EA] flex items-center justify-center text-white font-semibold text-lg'>
+          {initials}
+        </div>
         <h1 className='mt-2 text-center font-medium'>
-          {user?.fullName || "Guest"}
+          {user?.name || 'User'}
         </h1>
 
-        {/* MENU */}
+        {/* NAV */}
         <div className='px-6 mt-5 text-sm text-gray-600 font-medium'>
           {navItems.map(({ to, label, Icon }) => (
             <NavLink
@@ -58,10 +58,9 @@ const Sidebar = ({ sidebar, setSidebar }) => {
               onClick={() => setSidebar(false)}
               className={({ isActive }) =>
                 `px-3.5 py-2.5 flex items-center gap-3 rounded transition-all
-                ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#3C81F6] to-[#9234EA] text-white'
-                    : 'hover:bg-gray-100'
+                ${isActive
+                  ? 'bg-gradient-to-r from-[#3C81F6] to-[#9234EA] text-white'
+                  : 'hover:bg-gray-100'
                 }`
               }
             >
@@ -76,37 +75,26 @@ const Sidebar = ({ sidebar, setSidebar }) => {
         </div>
       </div>
 
-      {/* ✅ ONLY ONE BOTTOM SECTION */}
+      {/* BOTTOM */}
       <div className='w-full border-t border-gray-200 p-4 px-7 flex items-center justify-between'>
-        
-        <div
-          onClick={openUserProfile}
-          className='flex gap-3 items-center cursor-pointer'
-        >
-          <img
-            src={user?.imageUrl}
-            className='w-8 h-8 rounded-full object-cover'
-            alt=""
-          />
+        <div className='flex gap-3 items-center'>
+          <div className='w-8 h-8 rounded-full bg-gradient-to-br from-[#3C81F6] to-[#9234EA] flex items-center justify-center text-white text-xs font-semibold'>
+            {initials}
+          </div>
           <div>
-            <h1 className='text-sm font-medium'>
-              {user?.fullName || "Great Stack"}
-            </h1>
-            <p className='text-xs text-gray-500'>
-              <Protect plan='premium' fallback='Free'>
-                Premium
-              </Protect>{' '}
-              Plan
+            <h1 className='text-sm font-medium'>{user?.name || 'User'}</h1>
+            <p className='text-xs text-gray-500 flex items-center gap-1'>
+              <Gem className='w-3 h-3' />
+              {user?.plan === 'premium' ? 'Premium' : 'Free'} Plan
             </p>
           </div>
         </div>
 
         <LogOut
-          onClick={signOut}
+          onClick={handleLogout}
           className='w-5 h-5 text-gray-400 hover:text-gray-700 transition cursor-pointer'
         />
       </div>
-
     </div>
   )
 }

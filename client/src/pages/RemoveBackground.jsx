@@ -1,6 +1,6 @@
 import { Eraser, Sparkles, Image } from "lucide-react";
 import React, { useState } from "react";
-import axios from "axios";
+import axios from '../config/axios.js';
 import { useAuth } from "../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
 

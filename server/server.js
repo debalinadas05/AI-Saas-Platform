@@ -10,7 +10,13 @@ const app = express();
 
 await connectCloudinary();
 
-app.use(cors({ origin: process.env.CLIENT_URL || '*' }));
+app.use(cors({
+  origin: [
+    'https://ai-saas-platform-6pb4.vercel.app',
+    'https://ai-saas-platform-coral.vercel.app',
+    'http://localhost:5173'
+  ]
+}));
 app.use(express.json());
 
 app.get('/', (req, res) => res.send('Server is Live!'));

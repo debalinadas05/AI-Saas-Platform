@@ -1,5 +1,5 @@
 import sql from "../config/db.js";
-import axios from '../config/axios.js';
+import axios from 'axios'
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import Groq from "groq-sdk";
